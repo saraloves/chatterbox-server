@@ -51,7 +51,6 @@ var getQueryVariable = function(variable){
       type: 'POST',
       data: JSON.stringify(sendMsg),
       beforeSend: function(){
-        debugger;
       },
       contentType: 'application/json',
       success: function(data){
@@ -70,8 +69,10 @@ var getQueryVariable = function(variable){
       success: function(messages){
         var msg;
         var counter = 0;
-        for (var key in messages.results){
-          msg = messages.results[key];
+        messages = JSON.parse(messages);
+        for (var i = 0; i < messages.length; i++){
+          msg = messages[i];
+          console.log(msg);
           counter++;
           if (counter === 4){
             break;
@@ -90,6 +91,9 @@ var getQueryVariable = function(variable){
             events.trigger('message:display', msg);
           }
         }
+      },
+      error: function(data){
+        events.trigger('message:sendError', data);
       }
     });
   };
@@ -126,7 +130,7 @@ var getQueryVariable = function(variable){
       setInterval(function () {
         adj = [ 'better',
                 'aromatic',
-                'painful',
+                'brighter',
                 'dimmer',
                 'crushingly obvious',
                 'drunk',
@@ -138,7 +142,7 @@ var getQueryVariable = function(variable){
         events.trigger("message:send", {
             'username': 'marcus',
             'text': 'it gets '+adj[~~(Math.random()*10)],
-            'roomname': 'bitchfestDesk'
+            'roomname': 'happyTimesDesk'
         });
       }, 100000);
     },
@@ -172,6 +176,7 @@ var getQueryVariable = function(variable){
 
       events.trigger("message:fetch", null,this.roomname);
       setInterval(function(){
+        console.log('get!');
         events.trigger("message:fetch", that.lastMessageTime(),this.roomname);
       },3000);
     },

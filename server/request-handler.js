@@ -4,17 +4,35 @@
  * You'll have to figure out a way to export this function from
  * this file and include it in basic-server.js so that it actually works.
  * *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html. */
+var messages = [];
+// var jquery = require('../client/bower_components/jquery/jquery.min.js');
+// var underscore = require('../client/bower_components/underscore/underscore-min.js');
+// var backbone = require('../client/bower_components/backbone/backbone-min.js');
+// var config = require('../client/scripts/config.js');
+// var app = require('../client/scripts/app.js');
+// var index = require('../client/index.html');
+// var css = require('../client/styles/styles.css');
+var fs = require('fs');
 
-exports.handleRequest = function(request, response) {
+var handleRequest = function(request, response) {
   /* the 'request' argument comes from nodes http module. It includes info about the
   request - such as what URL the browser is requesting. */
 
   /* Documentation for both request and response can be found at
    * http://nodemanual.org/0.8.14/nodejs_ref_guide/http.html */
-   debugger;
+  // this.message = "";
   console.log("Serving request type " + request.method + " for url " + request.url);
 
-  var statusCode = '200';
+  var statusCode;
+
+  if (request.method === "GET" || request.method === "OPTIONS" ) {
+    statusCode = 200;
+  } else if (request.method === "POST") {
+    statusCode = 201;
+  }
+  if (request.url.indexOf('classes') === -1 && request.url !== "/") {
+    statusCode = 404;
+  }
 
   /* Without this line, this server wouldn't work. See the note
    * below about CORS. */
@@ -29,20 +47,39 @@ exports.handleRequest = function(request, response) {
    * anything back to the client until you do. The string you pass to
    * response.end() will be the body of the response - i.e. what shows
    * up in the browser.*/
-  if (request.data) {
-    console.log(request.data);
+  // var that = this;
+  request.on('data', function(data){
+    if (data) {
+      console.log('messages:',messages);
+      console.log('data:',"" + data);
+      messages.push(JSON.parse("" + data));
+    }
+  });
+
+  if (statusCode === 200){
+    if (request.url === "/") {
+     fs.readFile('client/index.html', function(err, content) {
+        headers['Content-Type'] = "text/html";
+        response.writeHead(200, headers);
+        response.write(content);
+        response.end();
+     });
+    } else {
+      response.end(JSON.stringify(messages));
+    }
+  } else if (statusCode === 201) {
+    response.end("Success!");
+  } else {
+    response.end("Error: Not found");
   }
-  response.end("hello");
 };
 
-/* These headers will allow Cross-Origin Resource Sharing (CORS).
- * This CRUCIAL code allows this server to talk to websites that
- * are on different domains. (Your chat client is running from a url
- * like file://your/chat/client/index.html, which is considered a
- * different domain.) */
 var defaultCorsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Accept, X-Parse-Application-Id, X-Parse-REST-API-Key",
   "Access-Control-Max-Age": 10 // Seconds.
 };
+
+
+exports.handleRequest = handleRequest;
