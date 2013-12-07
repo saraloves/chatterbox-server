@@ -1,3 +1,8 @@
+// debugger;
+// var $ = require('jquery');
+// var _ = require('underscore');
+// var Backbone = require('backbone');
+
 $(document).ready(function(){
   var chat = new Chat();
   new ChatView($('.mainMessages'));
