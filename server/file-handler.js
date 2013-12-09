@@ -1,0 +1,13 @@
+
+
+exports.servIndex = function(request, response, headers){
+
+};
+exports.filesys = function(request, response, headers){
+  fs.readFile('client' + request.url, function(err, content) {
+    headers['Content-Type'] = "text/html";
+    response.writeHead(200, headers);
+    response.write(content);
+    response.end();
+  });
+};

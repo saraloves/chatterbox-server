@@ -5,70 +5,65 @@
  * this file and include it in basic-server.js so that it actually works.
  * *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html. */
 var messages = [];
-// var $ = require('../client/bower_components/jquery/jquery.min.js');
-// var _ = require('../client/bower_components/underscore/underscore-min.js');
-// var Backbone = require('../client/bower_components/backbone/backbone-min.js');
-// var config = require('../client/scripts/config.js');
-// var index = require('../client/index.html');
-// var css = require('../client/styles/styles.css');
 var fs = require('fs');
-//var app = require('../client/scripts/app.js');
 
-var handleRequest = function(request, response) {
-  console.log("Serving request type " + request.method + " for url " + request.url);
-  var headers = defaultCorsHeaders;
-  headers['Content-Type'] = "text/plain";
-  var statusCode;
-
-  if (request.method === "GET" || request.method === "OPTIONS" ) {
-    statusCode = 200;
-  } else if (request.method === "POST") {
-    statusCode = 201;
-  }
-  // if (request.url !== "/" || request.url.indexOf('classes') === -1) {
-  //   statusCode = 404;
-  // }
-
-  response.writeHead(statusCode, headers);
-
-  request.on('data', function(data){
-    if (data) {
-      console.log('messages:',messages);
-      console.log('data:',"" + data);
-      messages.push(JSON.parse("" + data));
-    }
-  });
-  if (statusCode === 200) {
-    if (request.url === "/classes/messages") {
-      response.end(JSON.stringify(messages));
-    } else {
-      sendDataProcess(request.url, headers, response);
-    }
-  } else if (statusCode === 201) {
-    response.end("Success!");
-  } else {
-    response.end("Error: Not found");
-  }
-};
-
-var sendDataProcess = function(requestURL, headers, response) {
-  if (requestURL === "/") {
-    requestURL = "/index.html";
-  }
-  fs.readFile('client' + requestURL, function(err, content) {
-    headers['Content-Type'] = "text/html";
-    response.writeHead(200, headers);
-    response.write(content);
-    response.end();
-  });
-};
-
-var defaultCorsHeaders = {
+var headers = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Accept, X-Parse-Application-Id, X-Parse-REST-API-Key",
-  "Access-Control-Max-Age": 10 // Seconds.
+  "Access-Control-Max-Age": 10,
+  'Content-Type': "text/plain"
 };
 
+var writeResponse = function (response, obj, statusCode) {
+  statusCode = statusCode || 200;
+  response.writeHead(statusCode, headers);
+  response.end(JSON.stringify(obj));
+};
+
+var sendMessage = function (request, response) {
+  writeResponse(response, messages);
+};
+
+var saveMessages = function (request, response) {
+  collectData(request, response, function (data) {
+    messages.push(data);
+  });
+  writeResponse(response, 'Yeah, got it! Thanks for the message!');
+};
+
+var sendBackStatusCode = function (request, response) {
+  writeResponse(response, "Come on in!");
+};
+
+var collectData = function (request, response, cb) {
+  var data = '';
+  request.on('data', function(chunk){
+    if (chunk) {
+      console.log('messages:',messages);
+      data += chunk;
+      console.log('chunk:', data);
+    }
+  });
+  request.on('end', function () {
+    cb(JSON.parse(data));
+  });
+};
+
+var actionRouter = {
+  "GET": sendMessage,
+  "POST": saveMessages,
+  "OPTIONS": sendBackStatusCode
+};
+
+var handleRequest = function(request, response) {
+  console.log("Serving request type " + request.method + " for url " + request.url);
+  if (actionRouter[request.method] === undefined){
+    response.writeHead(404, headers);
+    response.end(null);
+  } else {
+    actionRouter[request.method](request, response);
+  }
+};
 
 exports.handleRequest = handleRequest;

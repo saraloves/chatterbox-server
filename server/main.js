@@ -1,35 +1,38 @@
 /* Import node's http module: */
 var http = require("http");
 var handleRequest = require('./request-handler').handleRequest;
+var servIndex = require('./file-handler').servIndex;
+var filesys = require('./file-handler').filesys;
 
-/* Every server needs to listen on a port with a unique number. The
- * standard port for HTTP servers is port 80, but that port is
- * normally already claimed by another server and/or not accessible
- * so we'll use a higher port number that is not likely to be taken: */
 var port = 8080;
-
-/* For now, since you're running this server on your local machine,
- * we'll have it listen on the IP address 127.0.0.1, which is a
- * special address that always refers to localhost. */
 var ip = "127.0.0.1";
 
-/* We use node's http module to create a server. Note, we called it 'server', but
-we could have called it anything (myServer, blahblah, etc.). The function we pass it (handleRequest)
-will, unsurprisingly, handle all incoming requests. (ps: 'handleRequest' is in the 'request-handler' file).
-Lastly, we tell the server we made to listen on the given port and IP. */
-var server = http.createServer(handleRequest);
+var headers = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Accept, X-Parse-Application-Id, X-Parse-REST-API-Key",
+  "Access-Control-Max-Age": 10,
+  'Content-Type': "text/plain"
+};
+
+var router = {
+  "/": servIndex,
+  "/classes/messages": handleRequest,
+  "/bower_components/jquery/jquery.min.js": filesys,
+  "/bower_components/underscore/underscore-min.js": filesys,
+  "/bower_components/backbone/backbone-min.js": filesys,
+  "/scripts/config.js": filesys,
+  "/scripts/app.js": filesys
+};
+
+var server = http.createServer(function(request, response){
+  if (router[request.url] === undefined){
+    handleRequest(request, response);
+  } else {
+    router[request.url](request, response, headers);
+  }
+});
+
 console.log("Listening on http://" + ip + ":" + port);
+
 server.listen(port, ip);
-
-
-
-/* To start this server, run:
-     node basic-server.js
- *  on the command line.
-
- * To connect to the server, load http://127.0.0.1:8080 in your web
- * browser.
-
- * server.listen() will continue running as long as there is the
- * possibility of serving more requests. To stop your server, hit
- * Ctrl-C on the command line. */
