@@ -41,7 +41,11 @@ var saveMessages = function (request, response) {
     });
     //next line might be redundant
     dbConnection.connect();
-    dbConnection.query('insert into messages (Users, Message, Roomname) VALUE (' + data.username + ', ' + data.text + ', ' + data.roomname + ');', function(err){
+    var username = dbConnection.escape(data.username);
+    var text = dbConnection.escape(data.text);
+    var roomname = dbConnection.escape(data.roomname);
+    var makeSql = 'INSERT INTO messages (Users, Message, Roomname) VALUE (' + username + ', ' + text + ', ' + roomname + ');';
+    dbConnection.query(makeSql, function(err){
       if (err) { throw err; }
       console.log('yay!!! mySQL worked!');
     });
