@@ -82,7 +82,7 @@ var getQueryVariable = function(variable){
           if (counter === 4){
             break;
           }
-          if (msg.text.length > 400){
+          if (msg.text.length > 255){
             continue;
           }
           if (msg.createdAt <= lastMsgTime){
