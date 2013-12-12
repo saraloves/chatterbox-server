@@ -6,6 +6,8 @@
  * *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html. */
 var messages = [];
 var fs = require('fs');
+var mysql = require('mysql');
+var qs = require('querystring');
 
 var headers = {
   "Access-Control-Allow-Origin": "*",
@@ -27,7 +29,23 @@ var sendMessage = function (request, response) {
 
 var saveMessages = function (request, response) {
   collectData(request, response, function (data) {
-    messages.push(data);
+    //messages.push(data); // change so this pushes to SQL database
+    //first we need to create a sql connection
+    //then we need to store our data to our table by using the correct sql commands
+    //then we need to close the connection
+    console.log('data after parse: ', data);
+    var dbConnection = mysql.createConnection({
+      user: "root",
+      password: "",
+      database: "chat"
+    });
+    //next line might be redundant
+    dbConnection.connect();
+    dbConnection.query('insert into messages (Users, Message, Roomname) VALUE (' + data.username + ', ' + data.text + ', ' + data.roomname + ');', function(err){
+      if (err) { throw err; }
+      console.log('yay!!! mySQL worked!');
+    });
+    dbConnection.end();
   });
   writeResponse(response, 'Yeah, got it! Thanks for the message!');
 };
@@ -46,7 +64,8 @@ var collectData = function (request, response, cb) {
     }
   });
   request.on('end', function () {
-    cb(JSON.parse(data));
+    data = qs.parse(data);
+    cb(data);
   });
 };
 
