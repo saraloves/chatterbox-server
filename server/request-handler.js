@@ -68,7 +68,7 @@ var collectData = function (request, response, cb) {
     }
   });
   request.on('end', function () {
-    data = qs.parse(data);
+    data = JSON.parse(data);
     cb(data);
   });
 };
